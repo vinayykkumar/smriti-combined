@@ -1,0 +1,40 @@
+{
+  "name": "smriti-monorepo",
+  "version": "1.0.0",
+  "description": "Smriti - A minimal, non-addictive reflection portal (Monorepo)",
+  "private": true,
+  "workspaces": [
+    "smriti-frontend"
+  ],
+  "scripts": {
+    "backend:install": "cd smriti-backend && pip install -r requirements.txt",
+    "backend:dev": "cd smriti-backend && uvicorn app.main:app --reload",
+    "backend:test": "cd smriti-backend && pytest",
+    "frontend:install": "cd smriti-frontend && npm install",
+    "frontend:start": "cd smriti-frontend && npm start",
+    "frontend:android": "cd smriti-frontend && npm run android",
+    "frontend:ios": "cd smriti-frontend && npm run ios",
+    "install:all": "npm run backend:install && npm run frontend:install",
+    "test:all": "npm run backend:test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/smriti-combined.git"
+  },
+  "keywords": [
+    "smriti",
+    "reflection",
+    "spiritual",
+    "minimal",
+    "monorepo",
+    "fastapi",
+    "react-native",
+    "expo"
+  ],
+  "author": "Smriti Contributors",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

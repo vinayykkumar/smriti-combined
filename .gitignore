@@ -1,0 +1,157 @@
+# Root-level .gitignore for Smriti Monorepo
+
+# ============================================
+# Python / Backend
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+env/
+ENV/
+.venv
+.pytest_cache/
+.coverage
+htmlcov/
+*.db
+*.sqlite3
+
+# ============================================
+# Node.js / Frontend
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+.pnpm-debug.log*
+
+# ============================================
+# Expo / React Native
+# ============================================
+.expo/
+.expo-shared/
+dist/
+web-build/
+expo-env.d.ts
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+.metro-health-check*
+ios/
+android/
+*.pem
+
+# ============================================
+# Environment Variables
+# ============================================
+.env
+.env.local
+.env*.local
+.env.development
+.env.production
+.env.test
+
+# ============================================
+# IDE & Editors
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# Logs
+# ============================================
+*.log
+logs/
+*.log.*
+
+# ============================================
+# OS Files
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ============================================
+# Secrets & Credentials
+# ============================================
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
+google-services.json
+*.pem
+*.key
+*.cert
+secrets/
+credentials/
+
+# ============================================
+# Build & Distribution
+# ============================================
+build/
+dist/
+*.tsbuildinfo
+.next/
+out/
+.nuxt/
+.cache/
+
+# ============================================
+# Testing
+# ============================================
+.coverage
+.nyc_output/
+test-results/
+playwright-report/
+
+# ============================================
+# Temporary Files
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# ============================================
+# Cloudinary
+# ============================================
+cloudinary_python.txt
+
+# ============================================
+# TypeScript
+# ============================================
+*.tsbuildinfo

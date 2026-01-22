@@ -1,0 +1,70 @@
+name: Deploy OTA Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Update channel to deploy to'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
+      branch:
+        description: 'Branch to deploy from'
+        required: true
+        default: 'main'
+        type: string
+      message:
+        description: 'Update message for users'
+        required: true
+        type: string
+
+jobs:
+  update:
+    name: Publish OTA Update
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish update
+        run: |
+          eas update --branch ${{ github.event.inputs.channel }} --message "${{ github.event.inputs.message }}" --non-interactive
+
+      - name: Get update info
+        id: update-info
+        run: |
+          echo "### 🚀 OTA Update Published!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Channel:** \`${{ github.event.inputs.channel }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.event.inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Message:** ${{ github.event.inputs.message }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### 📱 User Impact" >> $GITHUB_STEP_SUMMARY
+          echo "All users on the **${{ github.event.inputs.channel }}** channel will receive this update:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Automatically** when they restart the app" >> $GITHUB_STEP_SUMMARY
+          echo "- **No APK download** required" >> $GITHUB_STEP_SUMMARY
+          echo "- Update typically downloads in **seconds**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[View in Expo Dashboard](https://expo.dev)" >> $GITHUB_STEP_SUMMARY

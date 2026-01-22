@@ -1,0 +1,73 @@
+name: Build and Distribute APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build from'
+        required: true
+        default: 'main'
+        type: string
+      profile:
+        description: 'Build profile to use'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
+      message:
+        description: 'Build message/notes (optional)'
+        required: false
+        type: string
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build APK
+        run: |
+          if [ -n "${{ github.event.inputs.message }}" ]; then
+            eas build --platform android --profile ${{ github.event.inputs.profile }} --non-interactive --clear-cache --message "${{ github.event.inputs.message }}"
+          else
+            eas build --platform android --profile ${{ github.event.inputs.profile }} --non-interactive --clear-cache --message "Build from branch: ${{ github.event.inputs.branch }}"
+          fi
+
+      - name: Get build info
+        id: build-info
+        run: |
+          # Create a nice summary
+          echo "### 🎉 APK Build Started!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.event.inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Profile:** \`${{ github.event.inputs.profile }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### 📦 Download APK" >> $GITHUB_STEP_SUMMARY
+          echo "Once the build completes (~15 minutes), download from:" >> $GITHUB_STEP_SUMMARY
+          echo "- Visit the [Expo Dashboard](https://expo.dev) and check your latest build" >> $GITHUB_STEP_SUMMARY
+          echo "- Or scan the QR code shown in the build logs above" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> 💡 **Tip:** Share the download link with your users directly!" >> $GITHUB_STEP_SUMMARY

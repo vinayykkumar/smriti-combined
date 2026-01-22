@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "smriti-backend"
+version = "0.1.0"
+description = "A minimal, non-addictive reflection portal backend"
+authors = ["Vinay <vinay@example.com>"]
+readme = "README.md"
+packages = [{include = "app"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"  # Flexible for 3.12/3.13
+fastapi = "^0.109.0"
+uvicorn = {extras = ["standard"], version = "^0.27.0"}
+motor = "^3.3.2"
+pymongo = "^4.6.1"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-multipart = "^0.0.6"
+cloudinary = "^1.38.0"
+python-dotenv = "^1.0.0"
+pydantic = "^2.5.3"
+pydantic-settings = "^2.1.0"
+dnspython = "^2.8.0"
+firebase-admin = "^7.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

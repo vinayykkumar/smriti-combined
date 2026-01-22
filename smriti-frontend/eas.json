@@ -1,0 +1,35 @@
+{
+    "build": {
+        "development": {
+            "developmentClient": true,
+            "distribution": "internal",
+            "android": {
+                "buildType": "apk"
+            },
+            "channel": "development"
+        },
+        "preview": {
+            "distribution": "internal",
+            "channel": "preview",
+            "android": {
+                "buildType": "apk",
+                "gradleCommand": ":app:assembleRelease"
+            },
+            "autoIncrement": true,
+            "env": {
+                "JAVA_OPTS": "-XX:MaxMetaspaceSize=1g -Xmx4g",
+                "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+            }
+        },
+        "production": {
+            "android": {
+                "buildType": "app-bundle"
+            },
+            "autoIncrement": true,
+            "channel": "production"
+        }
+    },
+    "submit": {
+        "production": {}
+    }
+}

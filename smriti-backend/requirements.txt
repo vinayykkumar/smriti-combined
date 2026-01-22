@@ -1,0 +1,28 @@
+# Python dependencies for Smriti Backend
+
+# FastAPI framework
+fastapi
+uvicorn[standard]
+
+# Database
+motor
+pymongo
+dnspython
+
+# Authentication & Security
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+
+# Cloudinary for file storage
+cloudinary
+
+# Environment variables
+python-dotenv
+
+# Data validation
+pydantic
+pydantic-settings
+
+# Firebase for push notifications
+firebase-admin
