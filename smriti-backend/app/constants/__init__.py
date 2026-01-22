@@ -1,0 +1,3 @@
+"""
+Constants for Smriti Backend.
+"""
