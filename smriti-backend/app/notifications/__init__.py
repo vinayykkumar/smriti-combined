@@ -1,1 +1,3 @@
-# Notifications module for push notifications
+"""
+Notifications module for Smriti Backend.
+"""
