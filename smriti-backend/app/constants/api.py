@@ -22,4 +22,4 @@ DEFAULT_SKIP = 0
 # File Upload Limits
 MAX_FILE_SIZE_MB = 10.0
 ALLOWED_IMAGE_TYPES = ["jpg", "jpeg", "png", "gif", "webp"]
-ALLOWED_DOCUMENT_TYPES = ["pdf", "doc", "docx"]
+ALLOWED_DOCUMENT_TYPES = ["pdf", "doc", "docx", "txt"]
