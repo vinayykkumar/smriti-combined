@@ -1,10 +1,9 @@
-from datetime import datetime
 from bson import ObjectId
 from app.posts.schemas import PostCreate, PostInDB
 from app.utils.cloudinary import delete_file
-import logging
+from app.utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 async def get_all_posts(db, skip: int, limit: int):
     cursor = db.posts.find().sort("created_at", -1).skip(skip).limit(limit)

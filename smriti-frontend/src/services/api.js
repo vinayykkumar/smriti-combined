@@ -1,23 +1,13 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL, STORAGE_KEY_USER_TOKEN } from '../constants/config';
-import { getApiHeaders, handleApiResponse, buildQueryString } from '../utils/apiHelpers';
-import { handleApiError, getErrorMessage } from '../utils/errorHandler';
-import { getData } from '../utils/storageHelpers';
-
 /**
- * Get the auth token from AsyncStorage
- * @returns {Promise<string|null>} - Auth token or null
+ * Legacy API service - re-exports from modular API structure.
+ * 
+ * This file is kept for backward compatibility.
+ * New code should import from '../services/api' (index.js) instead.
  */
-export const getAuthToken = async () => {
-    try {
-        // Use storage helper for consistency
-        const token = await getData(STORAGE_KEY_USER_TOKEN);
-        return token;
-    } catch (error) {
-        console.error('Error getting auth token:', error);
-        return null;
-    }
-};
+
+// Re-export everything from the new modular API structure
+export * from './api';
+export { default } from './api';
 
 /**
  * Create a new post via API

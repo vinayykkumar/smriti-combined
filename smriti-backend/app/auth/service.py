@@ -1,10 +1,10 @@
-from datetime import datetime
 from app.utils.security import get_password_hash, verify_password, create_access_token
+from app.utils.date_helpers import get_current_timestamp
+from app.utils.logger import get_logger
 from app.auth.schemas import UserCreate, UserResponse
 from bson import ObjectId
-import logging
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 async def get_user_by_username(db, username: str):
     return await db.users.find_one({"username": username})
@@ -43,7 +43,7 @@ async def create_user(db, user: UserCreate):
         password = password[:72]
     
     user_dict["hashed_password"] = get_password_hash(password)
-    user_dict["created_at"] = datetime.utcnow()
+    user_dict["created_at"] = get_current_timestamp()
     user_dict["email_verified"] = False
     user_dict["phone_verified"] = False
     

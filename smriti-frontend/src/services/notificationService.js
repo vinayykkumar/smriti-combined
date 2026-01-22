@@ -1,6 +1,6 @@
 import messaging from '@react-native-firebase/messaging';
 import { Platform, Alert } from 'react-native';
-import { registerNotificationToken, unregisterNotificationToken } from './api';
+import { notifications } from './api';
 
 /**
  * Request notification permission from the user
@@ -37,7 +37,7 @@ export async function registerDeviceToken(authToken) {
         console.log('📱 FCM Token retrieved:', fcmToken.substring(0, 20) + '...');
 
         // Register with backend
-        await registerNotificationToken(fcmToken, Platform.OS);
+        await notifications.registerNotificationToken(fcmToken, Platform.OS);
         console.log('✅ Device registered for notifications');
 
         return fcmToken;
@@ -54,7 +54,7 @@ export async function registerDeviceToken(authToken) {
 export async function unregisterDeviceToken(authToken) {
     try {
         const fcmToken = await messaging().getToken();
-        await unregisterNotificationToken(fcmToken, Platform.OS);
+        await notifications.unregisterNotificationToken(fcmToken, Platform.OS);
         console.log('✅ Device unregistered from notifications');
     } catch (error) {
         console.error('❌ Failed to unregister device token:', error);

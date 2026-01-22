@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from app.database.connection import get_database
 from app.auth.dependencies import get_current_user
 from app.auth.schemas import UserResponse
+from app.utils.response_formatter import success_response
 from app.users import service
 from app.users.schemas import UserProfileResponse
 
@@ -16,10 +17,7 @@ async def get_current_user_profile(
     # Get user profile with statistics
     profile_data = await service.get_user_profile_with_stats(db, current_user)
     
-    return {
-        "success": True,
-        "status": "success",
-        "data": {
-            "user": profile_data
-        }
-    }
+    return success_response(
+        data={"user": profile_data},
+        message="Profile retrieved successfully"
+    )

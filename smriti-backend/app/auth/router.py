@@ -43,15 +43,13 @@ async def signup(user: UserCreate, db = Depends(get_database)):
 
 @router.post("/login", response_model=dict)
 async def login(login_data: LoginRequest, db = Depends(get_database)):
-    # Validate that at least one identifier is provided
-    if not login_data.username and not login_data.email and not login_data.phone:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"success": False, "error": "Username, email, or phone is required"}
-        )
+    from app.auth.validators import validate_login_data
     
     # Use whichever is provided (priority: username > email > phone)
     identifier = login_data.username or login_data.email or login_data.phone
+    
+    # Validate login data
+    validate_login_data(identifier, login_data.password)
     
     # Authenticate user
     user = await service.authenticate_user(db, identifier, login_data.password)

@@ -29,75 +29,24 @@ from app.middleware.logging import RequestLoggingMiddleware
 app.add_middleware(RequestLoggingMiddleware)
 
 # Exception Handlers
-from fastapi.responses import JSONResponse
+from app.middleware.exception_handlers import (
+    http_exception_handler,
+    validation_exception_handler,
+    global_exception_handler
+)
 from fastapi.exceptions import RequestValidationError
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc: HTTPException):
-    """Custom handler for HTTPException to return API design format"""
-    from app.utils.response_formatter import error_response
-    
-    # If detail is already a dict with our format, use it
-    if isinstance(exc.detail, dict):
-        return JSONResponse(
-            status_code=exc.status_code,
-            content=exc.detail
-        )
-    # Otherwise use error_response formatter
-    return error_response(
-        message=str(exc.detail),
-        status_code=exc.status_code
-    )
+async def http_exception_handler_wrapper(request, exc: HTTPException):
+    return await http_exception_handler(request, exc)
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc: RequestValidationError):
-    """Convert validation errors (422) to 400 with custom message"""
-    errors = exc.errors()
-    
-    # Extract field name and create custom message
-    if errors:
-        first_error = errors[0]
-        field = first_error.get("loc", [])[-1] if first_error.get("loc") else "field"
-        error_type = first_error.get("type", "")
-        error_msg_raw = first_error.get("msg", "")
-        
-        # Custom messages for common validation errors
-        # Check for string length validation (Pydantic v2 uses "string_too_short")
-        if field == "password" and ("min_length" in error_type or "string_too_short" in error_type or "at least 6" in error_msg_raw):
-            error_msg = "Password must be at least 6 characters long"
-        elif field == "username" and ("min_length" in error_type or "string_too_short" in error_type or "at least 3" in error_msg_raw):
-            error_msg = "Username must be at least 3 characters long"
-        elif field == "password" and "missing" in error_type:
-            error_msg = "Password is required"
-        elif field == "username" and "missing" in error_type:
-            error_msg = "Username is required"
-        else:
-            # Use default message for other validation errors
-            error_msg = error_msg_raw if error_msg_raw else "Invalid input"
-    else:
-        error_msg = "Invalid input"
-    
-    return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={
-            "success": False,
-            "error": error_msg
-        }
-    )
+async def validation_exception_handler_wrapper(request, exc: RequestValidationError):
+    return await validation_exception_handler(request, exc)
 
 @app.exception_handler(Exception)
-async def global_exception_handler(request, exc):
-    """Global exception handler for unhandled errors"""
-    from app.utils.response_formatter import error_response
-    from app.utils.logger import log_error
-    
-    # Log the error
-    log_error(exc, context=f"Unhandled exception in {request.url.path}")
-    
-    return error_response(
-        message="Something went wrong on the server. Please try again.",
-        status_code=500
-    )
+async def global_exception_handler_wrapper(request, exc: Exception):
+    return await global_exception_handler(request, exc)
 
 # Database events
 @app.on_event("startup")
