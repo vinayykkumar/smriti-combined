@@ -5,16 +5,19 @@ from app.posts.schemas import PostResponse, ContentType
 from app.auth.schemas import UserResponse
 from app.auth.dependencies import get_current_user
 from app.utils.cloudinary import upload_file
+from app.utils.file_helpers import is_allowed_file_type, validate_file_size, get_file_extension
+from app.utils.response_formatter import success_response, error_response
+from app.utils.date_helpers import get_current_timestamp
+from app.constants.api import ALLOWED_IMAGE_TYPES, ALLOWED_DOCUMENT_TYPES, MAX_FILE_SIZE_MB
 from app.posts import service
-from datetime import datetime
 from bson import ObjectId
 
 router = APIRouter()
 
-# Allowed file types
-ALLOWED_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp"}
-ALLOWED_DOCUMENT_EXTENSIONS = {"pdf", "doc", "docx", "txt"}
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+# Convert constants to sets for compatibility
+ALLOWED_IMAGE_EXTENSIONS = set(ALLOWED_IMAGE_TYPES)
+ALLOWED_DOCUMENT_EXTENSIONS = set(ALLOWED_DOCUMENT_TYPES)
+MAX_FILE_SIZE = int(MAX_FILE_SIZE_MB * 1024 * 1024)  # Convert MB to bytes
 
 @router.get("/", response_model=dict)
 async def get_posts(
@@ -26,17 +29,16 @@ async def get_posts(
     """Get all posts in chronological order (newest first)"""
     posts = await service.get_all_posts(db, skip, limit)
     
-    return {
-        "success": True,
-        "message": "Posts retrieved successfully",
-        "data": {
+    return success_response(
+        data={
             "count": len(posts),
             "posts": [
                 PostResponse(**{**post, "_id": str(post["_id"])}) 
                 for post in posts
             ]
-        }
-    }
+        },
+        message="Posts retrieved successfully"
+    )
 
 @router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def create_post(
@@ -69,18 +71,21 @@ async def create_post(
     image_public_id = None
     
     if content_type == ContentType.image and image:
-        # Validate file extension
-        file_ext = image.filename.split(".")[-1].lower()
-        if file_ext not in ALLOWED_IMAGE_EXTENSIONS:
+        # Validate file extension using utility
+        if not is_allowed_file_type(image.filename, ALLOWED_IMAGE_TYPES):
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid image type. Allowed: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
+                detail={"success": False, "error": f"Invalid image type. Allowed: {', '.join(ALLOWED_IMAGE_TYPES)}"}
             )
         
-        # Validate file size
+        # Validate file size using utility
         file_content = await image.read()
-        if len(file_content) > MAX_FILE_SIZE:
-            raise HTTPException(status_code=400, detail="Image size exceeds 10MB limit")
+        is_valid, error_msg = validate_file_size(len(file_content), MAX_FILE_SIZE_MB)
+        if not is_valid:
+            raise HTTPException(
+                status_code=400,
+                detail={"success": False, "error": error_msg}
+            )
         
         # Upload to Cloudinary
         try:
@@ -98,18 +103,21 @@ async def create_post(
     document_public_id = None
     
     if content_type == ContentType.document and document:
-        # Validate file extension
-        file_ext = document.filename.split(".")[-1].lower()
-        if file_ext not in ALLOWED_DOCUMENT_EXTENSIONS:
+        # Validate file extension using utility
+        if not is_allowed_file_type(document.filename, ALLOWED_DOCUMENT_TYPES):
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_DOCUMENT_EXTENSIONS)}"
+                detail={"success": False, "error": f"Invalid file type. Allowed: {', '.join(ALLOWED_DOCUMENT_TYPES)}"}
             )
         
-        # Validate file size
+        # Validate file size using utility
         file_content = await document.read()
-        if len(file_content) > MAX_FILE_SIZE:
-            raise HTTPException(status_code=400, detail="File size exceeds 10MB limit")
+        is_valid, error_msg = validate_file_size(len(file_content), MAX_FILE_SIZE_MB)
+        if not is_valid:
+            raise HTTPException(
+                status_code=400,
+                detail={"success": False, "error": error_msg}
+            )
         
         # Upload to Cloudinary
         try:
@@ -137,15 +145,16 @@ async def create_post(
             "user_id": str(current_user.id),
             "username": current_user.username
         },
-        "created_at": datetime.utcnow()
+        "created_at": get_current_timestamp()
     }
     
     created_post = await service.create_post_db(db, post_dict, current_user)
     
-    return {
-        "success": True,
-        "post": PostResponse(**{**created_post, "_id": str(created_post["_id"])})
-    }
+    return success_response(
+        data={"post": PostResponse(**{**created_post, "_id": str(created_post["_id"])})},
+        message="Post created successfully",
+        status_code=status.HTTP_201_CREATED
+    )
 
 @router.get("/me", response_model=dict)
 async def get_my_posts(
@@ -201,7 +210,6 @@ async def delete_post(
         
     await service.delete_post_db(db, post_id)
     
-    return {
-        "success": True,
-        "message": "Post deleted successfully"
-    }
+    return success_response(
+        message="Post deleted successfully"
+    )

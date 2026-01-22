@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.database.connection import get_database
 from app.auth.schemas import UserCreate, UserResponse, LoginRequest, AuthResponse
 from app.auth.dependencies import get_current_user
+from app.utils.response_formatter import success_response, error_response
+from app.utils.logger import log_error
 from app.auth import service
 
 router = APIRouter()
@@ -17,17 +19,17 @@ async def signup(user: UserCreate, db = Depends(get_database)):
         # Create token
         access_token = service.create_user_token(user_id)
         
-        return {
-            "success": True,
-            "message": "User registered successfully",
-            "data": {
+        return success_response(
+            data={
                 "username": created_user["username"],
                 "displayName": created_user.get("display_name"),
                 "email": created_user.get("email"),
                 "phone": created_user.get("phone"),
                 "token": access_token
-            }
-        }
+            },
+            message="User registered successfully",
+            status_code=status.HTTP_201_CREATED
+        )
     except ValueError as e:
         # Username already taken
         raise HTTPException(
@@ -36,9 +38,7 @@ async def signup(user: UserCreate, db = Depends(get_database)):
         )
     except Exception as e:
         # Log the actual error for debugging
-        import traceback
-        print(f"SIGNUP ERROR: {type(e).__name__}: {str(e)}")
-        traceback.print_exc()
+        log_error(e, context="User signup")
         raise
 
 @router.post("/login", response_model=dict)
@@ -67,17 +67,16 @@ async def login(login_data: LoginRequest, db = Depends(get_database)):
     # Create token
     access_token = service.create_user_token(user_id)
     
-    return {
-        "success": True,
-        "message": "Login successful",
-        "data": {
+    return success_response(
+        data={
             "username": user["username"],
             "displayName": user.get("display_name"),
             "email": user.get("email"),
             "phone": user.get("phone"),
             "token": access_token
-        }
-    }
+        },
+        message="Login successful"
+    )
 
 @router.get("/check-username/{username}", response_model=dict)
 async def check_username(username: str, db = Depends(get_database)):

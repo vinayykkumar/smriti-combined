@@ -1,5 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, STORAGE_KEY_USER_TOKEN } from '../constants/config';
+import { getApiHeaders, handleApiResponse, buildQueryString } from '../utils/apiHelpers';
+import { handleApiError, getErrorMessage } from '../utils/errorHandler';
+import { getData } from '../utils/storageHelpers';
 
 /**
  * Get the auth token from AsyncStorage
@@ -7,7 +10,8 @@ import { API_BASE_URL, STORAGE_KEY_USER_TOKEN } from '../constants/config';
  */
 export const getAuthToken = async () => {
     try {
-        const token = await AsyncStorage.getItem(STORAGE_KEY_USER_TOKEN);
+        // Use storage helper for consistency
+        const token = await getData(STORAGE_KEY_USER_TOKEN);
         return token;
     } catch (error) {
         console.error('Error getting auth token:', error);
@@ -81,33 +85,36 @@ export const createPost = async (postData) => {
             console.log('Document attached:', doc.name, doc.mimeType);
         }
 
+        const headers = getApiHeaders(token);
+        // Remove Content-Type for FormData - React Native sets it automatically
+        delete headers['Content-Type'];
+        
         const response = await fetch(`${API_BASE_URL}/posts/`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                // Note: Don't set Content-Type header for FormData
-                // React Native will set it automatically with boundary
-            },
+            headers,
             body: formData
         });
 
         console.log('Response status:', response.status);
-        const data = await response.json();
-        console.log('Response data:', JSON.stringify(data, null, 2));
-
+        
         if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorInfo = handleApiError({ response, data: errorData });
             return {
                 success: false,
-                error: data.message || data.error || `Server error: ${response.status}`
+                error: getErrorMessage(errorInfo)
             };
         }
 
+        const data = await handleApiResponse(response);
+        console.log('Response data:', JSON.stringify(data, null, 2));
         return data;
     } catch (error) {
-        console.error('Error creating post:', error);
+        const errorInfo = handleApiError(error);
+        console.error('Error creating post:', errorInfo.message);
         return {
             success: false,
-            error: error.message || 'Network error occurred'
+            error: getErrorMessage(errorInfo)
         };
     }
 };
@@ -126,11 +133,10 @@ export const fetchPosts = async (skip = 0, limit = 20) => {
             return [];
         }
 
-        const response = await fetch(`${API_BASE_URL}/posts/?skip=${skip}&limit=${limit}`, {
+        const queryParams = buildQueryString({ skip, limit });
+        const response = await fetch(`${API_BASE_URL}/posts/${queryParams}`, {
             method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: getApiHeaders(token)
         });
 
         if (!response.ok) {
@@ -138,13 +144,14 @@ export const fetchPosts = async (skip = 0, limit = 20) => {
             return [];
         }
 
-        const responseData = await response.json();
+        const responseData = await handleApiResponse(response);
         console.log('Fetched posts:', responseData);
 
         // Extract posts from response.data.posts
         return responseData.data?.posts || [];
     } catch (error) {
-        console.error('Error fetching posts:', error);
+        const errorInfo = handleApiError(error);
+        console.error('Error fetching posts:', errorInfo.message);
         return [];
     }
 };
@@ -162,27 +169,27 @@ export const fetchUserProfile = async () => {
 
         const response = await fetch(`${API_BASE_URL}/users/me`, {
             method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: getApiHeaders(token)
         });
 
-        const data = await response.json();
-        console.log('Fetched user profile:', data);
-
         if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorInfo = handleApiError({ response, data: errorData });
             return {
                 success: false,
-                error: data.error || `Server error: ${response.status}`
+                error: getErrorMessage(errorInfo)
             };
         }
 
+        const data = await handleApiResponse(response);
+        console.log('Fetched user profile:', data);
         return data;
     } catch (error) {
-        console.error('Error fetching user profile:', error);
+        const errorInfo = handleApiError(error);
+        console.error('Error fetching user profile:', errorInfo.message);
         return {
             success: false,
-            error: error.message || 'Network error occurred'
+            error: getErrorMessage(errorInfo)
         };
     }
 };
@@ -200,32 +207,33 @@ export const fetchMyPosts = async (skip = 0, limit = 20) => {
             return { success: false, error: 'No authentication token found' };
         }
 
+        const queryParams = buildQueryString({ skip, limit });
         const response = await fetch(
-            `${API_BASE_URL}/posts/me?skip=${skip}&limit=${limit}`,
+            `${API_BASE_URL}/posts/me${queryParams}`,
             {
                 method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: getApiHeaders(token)
             }
         );
 
-        const data = await response.json();
-        console.log('Fetched my posts:', data);
-
         if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorInfo = handleApiError({ response, data: errorData });
             return {
                 success: false,
-                error: data.error || `Server error: ${response.status}`
+                error: getErrorMessage(errorInfo)
             };
         }
 
+        const data = await handleApiResponse(response);
+        console.log('Fetched my posts:', data);
         return data;
     } catch (error) {
-        console.error('Error fetching my posts:', error);
+        const errorInfo = handleApiError(error);
+        console.error('Error fetching my posts:', errorInfo.message);
         return {
             success: false,
-            error: error.message || 'Network error occurred'
+            error: getErrorMessage(errorInfo)
         };
     }
 };
@@ -244,27 +252,27 @@ export const deletePost = async (postId) => {
 
         const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
             method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: getApiHeaders(token)
         });
 
-        const data = await response.json();
-        console.log('Delete post response:', data);
-
         if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorInfo = handleApiError({ response, data: errorData });
             return {
                 success: false,
-                error: data.error || `Server error: ${response.status}`
+                error: getErrorMessage(errorInfo)
             };
         }
 
+        const data = await handleApiResponse(response);
+        console.log('Delete post response:', data);
         return data;
     } catch (error) {
-        console.error('Error deleting post:', error);
+        const errorInfo = handleApiError(error);
+        console.error('Error deleting post:', errorInfo.message);
         return {
             success: false,
-            error: error.message || 'Network error occurred'
+            error: getErrorMessage(errorInfo)
         };
     }
 };
@@ -284,32 +292,31 @@ export const registerNotificationToken = async (token, platform) => {
 
         const response = await fetch(`${API_BASE_URL}/notifications/register-token`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json'
-            },
+            headers: getApiHeaders(authToken),
             body: JSON.stringify({
                 token,
                 platform
             })
         });
 
-        const data = await response.json();
-        console.log('Register token response:', data);
-
         if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorInfo = handleApiError({ response, data: errorData });
             return {
                 success: false,
-                error: data.error || `Server error: ${response.status}`
+                error: getErrorMessage(errorInfo)
             };
         }
 
+        const data = await handleApiResponse(response);
+        console.log('Register token response:', data);
         return data;
     } catch (error) {
-        console.error('Error registering notification token:', error);
+        const errorInfo = handleApiError(error);
+        console.error('Error registering notification token:', errorInfo.message);
         return {
             success: false,
-            error: error.message || 'Network error occurred'
+            error: getErrorMessage(errorInfo)
         };
     }
 };
@@ -329,32 +336,31 @@ export const unregisterNotificationToken = async (token, platform) => {
 
         const response = await fetch(`${API_BASE_URL}/notifications/unregister-token`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json'
-            },
+            headers: getApiHeaders(authToken),
             body: JSON.stringify({
                 token,
                 platform
             })
         });
 
-        const data = await response.json();
-        console.log('Unregister token response:', data);
-
         if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorInfo = handleApiError({ response, data: errorData });
             return {
                 success: false,
-                error: data.error || `Server error: ${response.status}`
+                error: getErrorMessage(errorInfo)
             };
         }
 
+        const data = await handleApiResponse(response);
+        console.log('Unregister token response:', data);
         return data;
     } catch (error) {
-        console.error('Error unregistering notification token:', error);
+        const errorInfo = handleApiError(error);
+        console.error('Error unregistering notification token:', errorInfo.message);
         return {
             success: false,
-            error: error.message || 'Network error occurred'
+            error: getErrorMessage(errorInfo)
         };
     }
 };

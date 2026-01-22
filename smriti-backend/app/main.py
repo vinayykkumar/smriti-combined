@@ -7,11 +7,13 @@ from app.auth.router import router as auth_router
 from app.posts.router import router as posts_router
 from app.users.router import router as users_router
 from app.notifications.router import router as notifications_router
+from app.middleware.cors import setup_cors
+from app.utils.logger import get_logger
 import logging
 
 # Setup logging
 setup_logging()
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -19,14 +21,8 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# CORS (Cross-Origin Resource Sharing)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allowed_origins,  # Environment-specific
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS (Cross-Origin Resource Sharing) - using utility function
+setup_cors(app)
 
 # Request logging middleware
 from app.middleware.logging import RequestLoggingMiddleware
@@ -39,19 +35,18 @@ from fastapi.exceptions import RequestValidationError
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc: HTTPException):
     """Custom handler for HTTPException to return API design format"""
+    from app.utils.response_formatter import error_response
+    
     # If detail is already a dict with our format, use it
     if isinstance(exc.detail, dict):
         return JSONResponse(
             status_code=exc.status_code,
             content=exc.detail
         )
-    # Otherwise wrap it in our format
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "success": False,
-            "error": exc.detail
-        }
+    # Otherwise use error_response formatter
+    return error_response(
+        message=str(exc.detail),
+        status_code=exc.status_code
     )
 
 @app.exception_handler(RequestValidationError)
@@ -93,12 +88,15 @@ async def validation_exception_handler(request, exc: RequestValidationError):
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     """Global exception handler for unhandled errors"""
-    return JSONResponse(
-        status_code=500,
-        content={
-            "success": False,
-            "error": "Something went wrong on the server. Please try again."
-        }
+    from app.utils.response_formatter import error_response
+    from app.utils.logger import log_error
+    
+    # Log the error
+    log_error(exc, context=f"Unhandled exception in {request.url.path}")
+    
+    return error_response(
+        message="Something went wrong on the server. Please try again.",
+        status_code=500
     )
 
 # Database events

@@ -3,12 +3,14 @@ from typing import Optional, Union, Any
 from jose import jwt
 import bcrypt
 from app.config.settings import settings
+from app.utils.date_helpers import get_current_timestamp
 
 def create_access_token(subject: Union[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+    """Create JWT access token with expiration."""
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = get_current_timestamp() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = get_current_timestamp() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode = {"exp": expire, "sub": str(subject)}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
