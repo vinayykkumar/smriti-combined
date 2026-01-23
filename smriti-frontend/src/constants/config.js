@@ -13,6 +13,7 @@ export const STORAGE_KEY_USER_TOKEN = 'user_token';
 export const STORAGE_KEY_USER_DATA = 'user_data';
 export const STORAGE_KEY_USERS = `${STORAGE_KEY_PREFIX}:users`;
 export const STORAGE_KEY_POSTS = `${STORAGE_KEY_PREFIX}:posts`;
+export const STORAGE_KEY_POST_QUEUE = 'postQueue';
 
 // Pagination
 export const DEFAULT_POSTS_LIMIT = 20;

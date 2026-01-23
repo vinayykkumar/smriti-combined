@@ -57,3 +57,19 @@ export const logError = (error, context = '') => {
   // In production, you might want to send to error tracking service
   // e.g., Sentry, LogRocket, etc.
 };
+
+/**
+ * Log debug message (only in development)
+ * @param {string} message - Debug message
+ * @param {string} context - Context for the log
+ * @param {any} data - Optional data to log
+ */
+export const logDebug = (message, context = '', data = null) => {
+  if (__DEV__) {
+    if (data) {
+      console.log(`[${context}] ${message}`, data);
+    } else {
+      console.log(`[${context}] ${message}`);
+    }
+  }
+};

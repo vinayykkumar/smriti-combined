@@ -30,3 +30,22 @@ export const SUCCESS_MESSAGES = {
   POST_DELETED: 'Post deleted successfully',
   PROFILE_UPDATED: 'Profile updated successfully',
 };
+
+export const QUEUE_ERRORS = {
+  STORAGE_READ_FAILED: 'Unable to load saved posts. Please restart the app.',
+  STORAGE_WRITE_FAILED: 'Unable to save post offline. Please try again.',
+  STORAGE_CORRUPTED: 'Saved posts data was corrupted and has been reset.',
+  VALIDATION_FAILED: 'Post content is invalid. Please check and try again.',
+  POST_NOT_FOUND: 'Post not found in saved posts.',
+  INVALID_STATUS: 'Invalid post status.',
+  CONCURRENT_ACCESS: 'Another operation is in progress. Please wait.',
+};
+
+export const SYNC_ERRORS = {
+  SYNC_IN_PROGRESS: 'Posts are already being synced. Please wait.',
+  NO_POSTS_TO_SYNC: 'No posts to sync.',
+  NETWORK_UNAVAILABLE: 'No internet connection. Posts will sync when you\'re back online.',
+  SYNC_CANCELLED: 'Sync was cancelled.',
+  SYNC_TIMEOUT: 'Sync took too long. Will retry automatically.',
+  BATCH_FAILED: 'Failed to upload posts. Will retry automatically.',
+};
