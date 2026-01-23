@@ -2,7 +2,7 @@
 
 > **स्मृति** (Sanskrit: Memory/Reflection)
 
-A minimal, non-addictive reflection portal designed for a small spiritual community. This monorepo contains both the backend API and mobile frontend application.
+A minimal, non-addictive reflection portal designed for a small spiritual community. This monorepo contains both the backend API and mobile frontend application. new
 
 ---
 
