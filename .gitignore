@@ -155,3 +155,6 @@ cloudinary_python.txt
 # TypeScript
 # ============================================
 *.tsbuildinfo
+
+
+.claude/

@@ -1,18 +1,61 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import SearchScreen from '../screens/SearchScreen';
+import UserProfileScreen from '../screens/UserProfileScreen';
 import { COLORS } from '../styles/theme';
 
 const Tab = createBottomTabNavigator();
+const HomeStack = createNativeStackNavigator();
+const SearchStack = createNativeStackNavigator();
+const ProfileStack = createNativeStackNavigator();
+
+function HomeStackNavigator({ onCreatePost, onLogout }) {
+    return (
+        <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+            <HomeStack.Screen name="HomeMain">
+                {(props) => (
+                    <HomeScreen
+                        {...props}
+                        onCreatePost={onCreatePost}
+                        onLogout={onLogout}
+                    />
+                )}
+            </HomeStack.Screen>
+            <HomeStack.Screen name="UserProfile" component={UserProfileScreen} />
+        </HomeStack.Navigator>
+    );
+}
+
+function SearchStackNavigator() {
+    return (
+        <SearchStack.Navigator screenOptions={{ headerShown: false }}>
+            <SearchStack.Screen name="Search" component={SearchScreen} />
+            <SearchStack.Screen name="UserProfile" component={UserProfileScreen} />
+        </SearchStack.Navigator>
+    );
+}
+
+function ProfileStackNavigator({ onLogout }) {
+    return (
+        <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
+            <ProfileStack.Screen name="ProfileMain">
+                {(props) => <ProfileScreen {...props} onLogout={onLogout} />}
+            </ProfileStack.Screen>
+            <ProfileStack.Screen name="UserProfile" component={UserProfileScreen} />
+        </ProfileStack.Navigator>
+    );
+}
 
 export default function AppNavigator({ onCreatePost, onLogout }) {
     return (
         <Tab.Navigator
             screenOptions={{
                 headerShown: false,
-                tabBarShowLabel: false, // Hide text labels
+                tabBarShowLabel: false,
                 tabBarActiveTintColor: COLORS.primary,
                 tabBarInactiveTintColor: COLORS.textLight,
                 tabBarStyle: {
@@ -25,7 +68,7 @@ export default function AppNavigator({ onCreatePost, onLogout }) {
             }}
         >
             <Tab.Screen
-                name="Home"
+                name="HomeTab"
                 options={{
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="home" size={size} color={color} />
@@ -33,16 +76,26 @@ export default function AppNavigator({ onCreatePost, onLogout }) {
                     tabBarLabel: 'Home',
                 }}
             >
-                {(props) => (
-                    <HomeScreen
-                        {...props}
+                {() => (
+                    <HomeStackNavigator
                         onCreatePost={onCreatePost}
                         onLogout={onLogout}
                     />
                 )}
             </Tab.Screen>
             <Tab.Screen
-                name="Profile"
+                name="SearchTab"
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="search" size={size} color={color} />
+                    ),
+                    tabBarLabel: 'Search',
+                }}
+            >
+                {() => <SearchStackNavigator />}
+            </Tab.Screen>
+            <Tab.Screen
+                name="ProfileTab"
                 options={{
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="person" size={size} color={color} />
@@ -50,7 +103,7 @@ export default function AppNavigator({ onCreatePost, onLogout }) {
                     tabBarLabel: 'Profile',
                 }}
             >
-                {(props) => <ProfileScreen {...props} onLogout={onLogout} />}
+                {() => <ProfileStackNavigator onLogout={onLogout} />}
             </Tab.Screen>
         </Tab.Navigator>
     );

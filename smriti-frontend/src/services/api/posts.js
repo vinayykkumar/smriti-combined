@@ -114,3 +114,35 @@ export const deletePost = async (postId) => {
     };
   }
 };
+
+/**
+ * Search posts with full-text search and filters
+ * @param {Object} params - Search parameters
+ * @param {string} [params.q] - Search query text
+ * @param {string} [params.author_id] - Filter by author user ID
+ * @param {string} [params.content_type] - Filter by content type
+ * @param {string} [params.start_date] - Filter from date (ISO)
+ * @param {string} [params.end_date] - Filter until date (ISO)
+ * @param {number} [params.skip] - Pagination offset
+ * @param {number} [params.limit] - Pagination limit
+ * @returns {Promise<Object>} - {success, data: {posts, total, skip, limit}, error}
+ */
+export const searchPosts = async (params = {}) => {
+  try {
+    const cleanParams = {};
+    if (params.q) cleanParams.q = params.q;
+    if (params.author_id) cleanParams.author_id = params.author_id;
+    if (params.content_type) cleanParams.content_type = params.content_type;
+    if (params.start_date) cleanParams.start_date = params.start_date;
+    if (params.end_date) cleanParams.end_date = params.end_date;
+    if (params.skip !== undefined) cleanParams.skip = params.skip;
+    if (params.limit !== undefined) cleanParams.limit = params.limit;
+
+    return await apiGet('/api/posts/search', cleanParams);
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message || 'Failed to search posts'
+    };
+  }
+};

@@ -18,6 +18,13 @@ async def create_indexes():
     await db.posts.create_index([("created_at", -1)])  # For chronological sorting
     await db.posts.create_index("author.user_id")
     await db.posts.create_index("content_type")
+
+    # Text index for full-text search on title and text_content
+    await db.posts.create_index(
+        [("title", "text"), ("text_content", "text")],
+        name="posts_text_search_index",
+        default_language="english"
+    )
     
     print("✅ Database indexes created successfully")
     client.close()

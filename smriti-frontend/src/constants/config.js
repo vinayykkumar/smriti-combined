@@ -14,6 +14,7 @@ export const STORAGE_KEY_USER_DATA = 'user_data';
 export const STORAGE_KEY_USERS = `${STORAGE_KEY_PREFIX}:users`;
 export const STORAGE_KEY_POSTS = `${STORAGE_KEY_PREFIX}:posts`;
 export const STORAGE_KEY_POST_QUEUE = 'postQueue';
+export const STORAGE_KEY_SEARCH_HISTORY = `${STORAGE_KEY_PREFIX}:search_history`;
 
 // Pagination
 export const DEFAULT_POSTS_LIMIT = 20;

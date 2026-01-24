@@ -15,7 +15,7 @@ import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../styles/theme';
 import { usePosts } from '../hooks/usePosts';
 import { PostList } from '../components';
 
-export default function HomeScreen({ onCreatePost }) {
+export default function HomeScreen({ onCreatePost, navigation }) {
     const { posts, refreshing, refreshPosts } = usePosts();
     const appState = useRef(AppState.currentState);
 
@@ -45,6 +45,13 @@ export default function HomeScreen({ onCreatePost }) {
         imageUri: require('../../assets/daily_inspiration.png'),
         author: 'Reflections',
         links: []
+    };
+
+    const handleAuthorPress = (authorUserId, authorUsername) => {
+        navigation.navigate('UserProfile', {
+            userId: authorUserId,
+            username: authorUsername,
+        });
     };
 
     const handleLinkPress = async (url) => {
@@ -131,6 +138,7 @@ export default function HomeScreen({ onCreatePost }) {
                 refreshing={refreshing}
                 ListHeaderComponent={renderScrollableHeader}
                 contentContainerStyle={styles.scrollContent}
+                onAuthorPress={handleAuthorPress}
             />
 
             {/* FAB (Floating Action Button) */}

@@ -74,6 +74,44 @@ async def create_post(
         status_code=status.HTTP_201_CREATED
     )
 
+@router.get("/search", response_model=dict)
+async def search_posts(
+    q: Optional[str] = Query(None, description="Search query text"),
+    author_id: Optional[str] = Query(None, description="Filter by author user ID"),
+    content_type: Optional[str] = Query(None, description="Filter by content type (note, link, image, document)"),
+    start_date: Optional[str] = Query(None, description="Filter posts from this date (ISO format)"),
+    end_date: Optional[str] = Query(None, description="Filter posts until this date (ISO format)"),
+    skip: int = Query(0, ge=0, description="Number of results to skip"),
+    limit: int = Query(20, gt=0, le=100, description="Max results to return"),
+    db = Depends(get_database),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Search posts with full-text search and optional filters"""
+    result = await service.search_posts(
+        db=db,
+        q=q,
+        author_id=author_id,
+        content_type=content_type,
+        start_date=start_date,
+        end_date=end_date,
+        skip=skip,
+        limit=limit
+    )
+
+    return success_response(
+        data={
+            "posts": [
+                PostResponse(**{**post, "_id": str(post["_id"])})
+                for post in result["posts"]
+            ],
+            "total": result["total"],
+            "skip": skip,
+            "limit": limit
+        },
+        message="Search results retrieved successfully"
+    )
+
+
 @router.get("/me", response_model=dict)
 async def get_my_posts(
     skip: int = Query(0, ge=0, description="Number of posts to skip"),

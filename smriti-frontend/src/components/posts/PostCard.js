@@ -5,14 +5,16 @@ import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../../styles/theme';
 /**
  * PostCard Component - Displays a single post
  * @param {object} post - Post data
+ * @param {function} [onAuthorPress] - Callback when author name is pressed (userId, username)
  */
-export default function PostCard({ post }) {
+export default function PostCard({ post, onAuthorPress }) {
     // Helper to get property with fallback
     const getProp = (key, fallbackKey) => post[key] || post[fallbackKey];
 
     const imageUrl = getProp('imageUrl', 'image_url');
     const documentUrl = getProp('documentUrl', 'document_url');
     const authorName = post.author?.username || post.author_name || 'Unknown';
+    const authorUserId = post.author?.userId || post.author?.user_id;
     const postDate = new Date(post.createdAt || post.created_at || post.date).toLocaleDateString();
     const content = post.textContent || post.text_content || post.description;
 
@@ -36,9 +38,20 @@ export default function PostCard({ post }) {
             <View style={styles.postContent}>
                 <Text style={styles.postTitle}>{post.title}</Text>
                 <View style={styles.postMeta}>
-                    <Text style={styles.postAuthor}>
-                        Author: {authorName}
-                    </Text>
+                    {onAuthorPress && authorUserId ? (
+                        <TouchableOpacity
+                            onPress={() => onAuthorPress(authorUserId, authorName)}
+                            activeOpacity={0.6}
+                        >
+                            <Text style={[styles.postAuthor, styles.postAuthorClickable]}>
+                                Author: {authorName}
+                            </Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <Text style={styles.postAuthor}>
+                            Author: {authorName}
+                        </Text>
+                    )}
                     <Text style={styles.postDate}>
                         {postDate}
                     </Text>
@@ -118,6 +131,10 @@ const styles = StyleSheet.create({
         color: COLORS.secondary,
         fontStyle: 'italic',
         fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    },
+    postAuthorClickable: {
+        textDecorationLine: 'underline',
+        textDecorationColor: COLORS.secondary,
     },
     postDate: {
         ...TYPOGRAPHY.caption,

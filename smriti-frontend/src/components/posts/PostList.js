@@ -9,15 +9,17 @@ import PostCard from './PostCard';
  * @param {function} onRefresh - Refresh handler
  * @param {boolean} refreshing - Refreshing state
  * @param {ReactNode} ListHeaderComponent - Optional header component
+ * @param {function} [onAuthorPress] - Callback when author name is pressed (userId, username)
  */
 export default function PostList({
     posts,
     onRefresh,
     refreshing = false,
     ListHeaderComponent,
-    contentContainerStyle
+    contentContainerStyle,
+    onAuthorPress
 }) {
-    const renderPostItem = ({ item }) => <PostCard post={item} />;
+    const renderPostItem = ({ item }) => <PostCard post={item} onAuthorPress={onAuthorPress} />;
 
     return (
         <FlatList
