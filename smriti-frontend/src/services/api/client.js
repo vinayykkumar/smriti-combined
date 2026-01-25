@@ -128,3 +128,18 @@ export const apiDelete = async (endpoint, options = {}) => {
     method: 'DELETE',
   });
 };
+
+/**
+ * PATCH request helper
+ * @param {string} endpoint - API endpoint
+ * @param {Object} data - Request body
+ * @param {Object} options - Additional options
+ * @returns {Promise<any>} - Response data
+ */
+export const apiPatch = async (endpoint, data, options = {}) => {
+  return apiRequest(endpoint, {
+    ...options,
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+};

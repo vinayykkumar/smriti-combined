@@ -6,6 +6,7 @@ import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SearchScreen from '../screens/SearchScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
+import PastQuotesScreen from '../screens/PastQuotesScreen';
 import { COLORS } from '../styles/theme';
 
 const Tab = createBottomTabNavigator();
@@ -26,6 +27,7 @@ function HomeStackNavigator({ onCreatePost, onLogout }) {
                 )}
             </HomeStack.Screen>
             <HomeStack.Screen name="UserProfile" component={UserProfileScreen} />
+            <HomeStack.Screen name="PastQuotes" component={PastQuotesScreen} />
         </HomeStack.Navigator>
     );
 }

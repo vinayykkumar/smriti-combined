@@ -10,13 +10,15 @@ import LoginScreen from './src/screens/LoginScreen';
 import AppNavigator from './src/navigation/AppNavigator';
 import { COLORS } from './src/styles/theme';
 import { AuthProvider } from './src/contexts/AuthContext';
+import { QuoteProvider } from './src/contexts/QuoteContext';
 import { useAuth } from './src/hooks/useAuth';
+import { useQuote } from './src/hooks/useQuote';
+import QuotePopup from './src/components/common/QuotePopup';
 
-// Main App Content (uses auth context)
-function AppContent() {
-  const { isAuthenticated, isLoading, logout, token } = useAuth();
-  const [currentScreen, setCurrentScreen] = React.useState('MAIN'); // 'MAIN' or 'CREATE_POST'
-  const [authMode, setAuthMode] = React.useState('LANDING'); // 'LANDING', 'SIGN_UP', 'LOGIN'
+// Inner content that needs QuoteContext
+function AuthenticatedContent({ onLogout, onCreatePost, currentScreen, setCurrentScreen }) {
+  const { isAuthenticated, token } = useAuth();
+  const { openQuotePopup, clearQuoteData } = useQuote();
   const navigationRef = React.useRef(null);
 
   // Setup notification listeners when authenticated
@@ -33,10 +35,53 @@ function AppContent() {
         }
       };
 
-      const cleanup = setupNotificationListeners(navigation, token);
+      // Pass openQuotePopup for handling today_quote notifications
+      const cleanup = setupNotificationListeners(navigation, token, {
+        openQuotePopup
+      });
       return cleanup;
     }
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, token, openQuotePopup]);
+
+  // Clear quote data on logout
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      clearQuoteData();
+    }
+  }, [isAuthenticated, clearQuoteData]);
+
+  const handleLogout = async () => {
+    await onLogout();
+  };
+
+  if (currentScreen === 'CREATE_POST') {
+    return (
+      <CreatePostScreen
+        onCancel={() => setCurrentScreen('MAIN')}
+        onSave={(post) => {
+          setCurrentScreen('MAIN');
+        }}
+      />
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      <AppNavigator
+        onCreatePost={onCreatePost}
+        onLogout={handleLogout}
+      />
+      {/* Quote Popup - rendered inside NavigationContainer so it can use navigation */}
+      <QuotePopup />
+    </NavigationContainer>
+  );
+}
+
+// Main App Content (uses auth context)
+function AppContent() {
+  const { isAuthenticated, isLoading, logout, token } = useAuth();
+  const [currentScreen, setCurrentScreen] = React.useState('MAIN'); // 'MAIN' or 'CREATE_POST'
+  const [authMode, setAuthMode] = React.useState('LANDING'); // 'LANDING', 'SIGN_UP', 'LOGIN'
 
   // Check for OTA updates on app launch
   useEffect(() => {
@@ -77,29 +122,6 @@ function AppContent() {
     setCurrentScreen('MAIN');
   };
 
-  const renderScreen = () => {
-    if (currentScreen === 'MAIN') {
-      return (
-        <NavigationContainer>
-          <AppNavigator
-            onCreatePost={() => setCurrentScreen('CREATE_POST')}
-            onLogout={handleLogout}
-          />
-        </NavigationContainer>
-      );
-    }
-    if (currentScreen === 'CREATE_POST') {
-      return (
-        <CreatePostScreen
-          onCancel={() => setCurrentScreen('MAIN')}
-          onSave={(post) => {
-            setCurrentScreen('MAIN');
-          }}
-        />
-      );
-    }
-  };
-
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -108,7 +130,14 @@ function AppContent() {
           {/* Loading state while checking auth */}
         </View>
       ) : isAuthenticated ? (
-        renderScreen()
+        <QuoteProvider>
+          <AuthenticatedContent
+            onLogout={handleLogout}
+            onCreatePost={() => setCurrentScreen('CREATE_POST')}
+            currentScreen={currentScreen}
+            setCurrentScreen={setCurrentScreen}
+          />
+        </QuoteProvider>
       ) : authMode === 'LANDING' ? (
         <LandingScreen
           onSignUpPress={() => setAuthMode('SIGN_UP')}

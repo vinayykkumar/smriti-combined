@@ -19,6 +19,23 @@ export function AuthProvider({ children }) {
         checkExistingAuth();
     }, []);
 
+    /**
+     * Sync device timezone to server for Today's Quote feature
+     * Called on login and app load when authenticated
+     */
+    const syncTimezoneToServer = async () => {
+        try {
+            const { syncTimezone } = require('../services/api/users');
+            const result = await syncTimezone();
+            if (result.success) {
+                console.log('Timezone synced successfully');
+            }
+        } catch (error) {
+            // Silent fail - don't disrupt user experience
+            console.warn('Failed to sync timezone:', error);
+        }
+    };
+
     const checkExistingAuth = async () => {
         try {
             const [storedToken, storedUserData] = await AsyncStorage.multiGet([
@@ -33,6 +50,9 @@ export function AuthProvider({ children }) {
                 setToken(userToken);
                 setUser(JSON.parse(userData));
                 setIsAuthenticated(true);
+
+                // Sync timezone on app load when authenticated
+                syncTimezoneToServer();
             }
         } catch (error) {
             console.error('Error checking auth:', error);
@@ -67,6 +87,9 @@ export function AuthProvider({ children }) {
                 // Don't block login if notification setup fails
                 console.error('Failed to setup notifications:', notifError);
             }
+
+            // Sync timezone after login
+            syncTimezoneToServer();
         } catch (error) {
             console.error('Error during login:', error);
             throw error;

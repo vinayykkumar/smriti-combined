@@ -13,12 +13,14 @@ export * as auth from './auth';
 export * as posts from './posts';
 export * as users from './users';
 export * as notifications from './notifications';
+export * as quotes from './quotes';
 
 // Default export for backward compatibility
 import * as authService from './auth';
 import * as postsService from './posts';
 import * as usersService from './users';
 import * as notificationsService from './notifications';
+import * as quotesService from './quotes';
 import { getAuthToken } from './client';
 
 export default {
@@ -28,18 +30,23 @@ export default {
   login: authService.login,
   getCurrentUser: authService.getCurrentUser,
   checkUsername: authService.checkUsername,
-  
+
   // Posts
   fetchPosts: postsService.fetchPosts,
   createPost: postsService.createPost,
   fetchMyPosts: postsService.fetchMyPosts,
   deletePost: postsService.deletePost,
-  
+
   // Users
   fetchUserProfile: usersService.fetchUserProfile,
   updateUserProfile: usersService.updateUserProfile,
-  
+
   // Notifications
   registerNotificationToken: notificationsService.registerNotificationToken,
   unregisterNotificationToken: notificationsService.unregisterNotificationToken,
+
+  // Quotes
+  fetchTodayQuote: quotesService.fetchTodayQuote,
+  fetchQuoteHistory: quotesService.fetchQuoteHistory,
+  updateUserLocation: quotesService.updateUserLocation,
 };

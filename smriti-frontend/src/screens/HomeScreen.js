@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../styles/theme';
 import { usePosts } from '../hooks/usePosts';
 import { PostList } from '../components';
+import TodayQuoteCard from '../components/quotes/TodayQuoteCard';
 
 export default function HomeScreen({ onCreatePost, navigation }) {
     const { posts, refreshing, refreshPosts } = usePosts();
@@ -94,6 +95,9 @@ export default function HomeScreen({ onCreatePost, navigation }) {
                     </View>
                 </ImageBackground>
             </View>
+
+            {/* Today's Quote Section */}
+            <TodayQuoteCard navigation={navigation} />
 
             {posts.length > 0 && (
                 <View style={styles.feedHeader}>

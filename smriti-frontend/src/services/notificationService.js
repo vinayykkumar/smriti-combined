@@ -65,15 +65,28 @@ export async function unregisterDeviceToken(authToken) {
  * Setup all notification event listeners
  * @param {object} navigation - React Navigation object for routing
  * @param {string} authToken - JWT authentication token for token refresh
+ * @param {object} quoteCallbacks - Optional callbacks for quote notifications
+ * @param {function} quoteCallbacks.openQuotePopup - Function to open quote popup
  * @returns {Function} Cleanup function to remove listeners
  */
-export function setupNotificationListeners(navigation, authToken) {
+export function setupNotificationListeners(navigation, authToken, quoteCallbacks = {}) {
     const unsubscribers = [];
+    const { openQuotePopup } = quoteCallbacks;
 
     // 1. Handle foreground notifications (app is open)
     const unsubscribeForeground = messaging().onMessage(async (remoteMessage) => {
         console.log('📬 Notification received (foreground):', remoteMessage);
 
+        // Handle Today's Quote notification - open popup directly
+        if (remoteMessage.data?.type === 'today_quote') {
+            console.log('📬 Today\'s Quote notification - opening popup');
+            if (openQuotePopup) {
+                openQuotePopup(true); // Force refresh
+            }
+            return;
+        }
+
+        // Default behavior for other notifications
         Alert.alert(
             remoteMessage.notification?.title || 'New Notification',
             remoteMessage.notification?.body || '',
@@ -103,6 +116,16 @@ export function setupNotificationListeners(navigation, authToken) {
         (remoteMessage) => {
             console.log('📬 Notification opened app from background:', remoteMessage);
 
+            // Handle Today's Quote notification
+            if (remoteMessage.data?.type === 'today_quote') {
+                console.log('📬 Today\'s Quote notification (background) - opening popup');
+                if (openQuotePopup) {
+                    // Small delay to ensure app is ready
+                    setTimeout(() => openQuotePopup(true), 300);
+                }
+                return;
+            }
+
             // Navigate based on notification data
             if (remoteMessage.data?.postId) {
                 navigation.navigate('Home'); // Can navigate to PostDetail if implemented
@@ -122,6 +145,16 @@ export function setupNotificationListeners(navigation, authToken) {
                     '📬 App opened from notification (killed state):',
                     remoteMessage
                 );
+
+                // Handle Today's Quote notification
+                if (remoteMessage.data?.type === 'today_quote') {
+                    console.log('📬 Today\'s Quote notification (killed) - opening popup');
+                    if (openQuotePopup) {
+                        // Longer delay to ensure app is fully ready
+                        setTimeout(() => openQuotePopup(true), 500);
+                    }
+                    return;
+                }
 
                 // Navigate based on notification data
                 if (remoteMessage.data?.postId) {

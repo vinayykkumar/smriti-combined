@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from bson import ObjectId
+from pydantic import ValidationError
 from app.database.connection import get_database
 from app.auth.dependencies import get_current_user
 from app.auth.schemas import UserResponse
-from app.utils.response_formatter import success_response
+from app.utils.response_formatter import success_response, error_response
 from app.users import service
-from app.users.schemas import UserProfileResponse
+from app.users.schemas import UserProfileResponse, UserUpdate, UserUpdateResponse
 from app.posts import service as posts_service
 from app.posts.schemas import PostResponse
 
@@ -24,6 +25,45 @@ async def get_current_user_profile(
         data={"user": profile_data},
         message="Profile retrieved successfully"
     )
+
+
+@router.patch("/me", response_model=dict)
+async def update_current_user_profile(
+    update_data: UserUpdate,
+    db = Depends(get_database),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Update current user's profile.
+
+    Currently supports updating:
+    - timezone: IANA timezone string (e.g., 'America/New_York', 'Asia/Kolkata')
+    - latitude/longitude: Location coordinates (must be provided together)
+
+    These fields are used for the Today's Quote feature to calculate sunrise times.
+    """
+    try:
+        updated_user = await service.update_user_profile(
+            db=db,
+            user_id=str(current_user.id),
+            update_data=update_data
+        )
+
+        return success_response(
+            data={"user": updated_user.model_dump()},
+            message="Profile updated successfully"
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=404,
+            detail={"success": False, "error": str(e)}
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={"success": False, "error": "Failed to update profile"}
+        )
 
 
 @router.get("/{user_id}", response_model=dict)

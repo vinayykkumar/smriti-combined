@@ -2,26 +2,26 @@
 Unit tests for authentication schemas.
 """
 import pytest
-from app.auth.schemas import UserSignup, UserLogin
+from app.auth.schemas import UserCreate, LoginRequest
 
 
-def test_user_signup_schema():
-    """Test user signup schema validation."""
+def test_user_create_schema():
+    """Test user create schema validation."""
     user_data = {
         "username": "testuser",
         "email": "test@example.com",
         "password": "password123"
     }
-    user = UserSignup(**user_data)
+    user = UserCreate(**user_data)
     assert user.username == "testuser"
     assert user.email == "test@example.com"
 
 
-def test_user_login_schema():
-    """Test user login schema validation."""
+def test_login_request_schema():
+    """Test login request schema validation."""
     login_data = {
         "username": "testuser",
         "password": "password123"
     }
-    login = UserLogin(**login_data)
+    login = LoginRequest(**login_data)
     assert login.username == "testuser"

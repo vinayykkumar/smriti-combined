@@ -26,3 +26,9 @@ pydantic-settings
 
 # Firebase for push notifications
 firebase-admin
+
+# Timezone data (required for Windows/macOS)
+tzdata
+
+# Sunrise/sunset calculations (for Today's Quote feature)
+astral

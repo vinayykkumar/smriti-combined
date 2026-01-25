@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # Firebase
     FIREBASE_CREDENTIALS_PATH: Optional[str] = None
     FIREBASE_CREDENTIALS_JSON: Optional[str] = None
+
+    # Cron Security
+    CRON_SECRET: Optional[str] = None
     
     # Environment helpers
     @property

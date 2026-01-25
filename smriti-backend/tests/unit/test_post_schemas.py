@@ -13,7 +13,7 @@ def test_post_create_schema():
         "textContent": "This is a test"
     }
     post = PostCreate(**post_data)
-    assert post.contentType == ContentType.note
+    assert post.content_type == ContentType.note  # Field name is content_type (alias is contentType)
     assert post.title == "Test Post"
 
 

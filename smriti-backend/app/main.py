@@ -7,6 +7,7 @@ from app.auth.router import router as auth_router
 from app.posts.router import router as posts_router
 from app.users.router import router as users_router
 from app.notifications.router import router as notifications_router
+from app.quotes.router import router as quotes_router, internal_router as quotes_internal_router
 from app.middleware.cors import setup_cors
 from app.utils.logger import get_logger
 import logging
@@ -65,6 +66,8 @@ app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["Aut
 app.include_router(posts_router, prefix=f"{settings.API_V1_STR}/posts", tags=["Posts"])
 app.include_router(users_router, prefix=f"{settings.API_V1_STR}/users", tags=["Users"])
 app.include_router(notifications_router, prefix=f"{settings.API_V1_STR}/notifications", tags=["Notifications"])
+app.include_router(quotes_router, prefix=f"{settings.API_V1_STR}", tags=["Quotes"])
+app.include_router(quotes_internal_router, prefix=f"{settings.API_V1_STR}", tags=["Internal"])
 
 @app.get("/")
 async def root():

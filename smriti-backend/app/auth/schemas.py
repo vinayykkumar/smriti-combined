@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr, field_validator
-from typing import Optional
+from typing import Optional, Dict, Any
 from datetime import datetime
 from bson import ObjectId
 
@@ -51,10 +51,18 @@ class LoginRequest(BaseModel):
     phone: Optional[str] = Field(None, min_length=10, max_length=15)
     password: str = Field(..., min_length=6, max_length=128)
 
+class LocationData(BaseModel):
+    """User location coordinates"""
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+
+
 class UserResponse(UserBase):
     id: Optional[str] = Field(alias="_id", default=None)
     email: Optional[str] = None
     phone: Optional[str] = None
+    timezone: Optional[str] = None
+    location: Optional[LocationData] = None
     created_at: datetime = Field(alias="createdAt")
 
     class Config:
