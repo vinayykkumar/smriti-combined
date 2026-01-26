@@ -7,12 +7,17 @@ import ProfileScreen from '../screens/ProfileScreen';
 import SearchScreen from '../screens/SearchScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import PastQuotesScreen from '../screens/PastQuotesScreen';
+import CirclesListScreen from '../screens/CirclesListScreen';
+import CircleFeedScreen from '../screens/CircleFeedScreen';
+import CircleSettingsScreen from '../screens/CircleSettingsScreen';
+import CreateCirclePostScreen from '../screens/CreateCirclePostScreen';
 import { COLORS } from '../styles/theme';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
 const SearchStack = createNativeStackNavigator();
 const ProfileStack = createNativeStackNavigator();
+const CirclesStack = createNativeStackNavigator();
 
 function HomeStackNavigator({ onCreatePost, onLogout }) {
     return (
@@ -49,6 +54,53 @@ function ProfileStackNavigator({ onLogout }) {
             </ProfileStack.Screen>
             <ProfileStack.Screen name="UserProfile" component={UserProfileScreen} />
         </ProfileStack.Navigator>
+    );
+}
+
+function CirclesStackNavigator() {
+    return (
+        <CirclesStack.Navigator
+            screenOptions={{
+                headerStyle: { backgroundColor: COLORS.card },
+                headerTintColor: COLORS.text,
+                headerTitleStyle: { fontWeight: '600' },
+            }}
+        >
+            <CirclesStack.Screen
+                name="CirclesList"
+                component={CirclesListScreen}
+                options={{ headerTitle: 'Circles' }}
+            />
+            <CirclesStack.Screen
+                name="CircleDetail"
+                component={CircleFeedScreen}
+                options={({ route }) => ({
+                    headerTitle: route.params?.circleName || 'Circle',
+                    headerBackTitle: 'Back',
+                })}
+            />
+            <CirclesStack.Screen
+                name="CircleSettings"
+                component={CircleSettingsScreen}
+                options={{
+                    headerTitle: 'Circle Settings',
+                    headerBackTitle: 'Back',
+                }}
+            />
+            <CirclesStack.Screen
+                name="CreateCirclePost"
+                component={CreateCirclePostScreen}
+                options={{
+                    headerShown: false,
+                    presentation: 'modal',
+                }}
+            />
+            <CirclesStack.Screen
+                name="UserProfile"
+                component={UserProfileScreen}
+                options={{ headerShown: false }}
+            />
+        </CirclesStack.Navigator>
     );
 }
 
@@ -95,6 +147,17 @@ export default function AppNavigator({ onCreatePost, onLogout }) {
                 }}
             >
                 {() => <SearchStackNavigator />}
+            </Tab.Screen>
+            <Tab.Screen
+                name="CirclesTab"
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="people" size={size} color={color} />
+                    ),
+                    tabBarLabel: 'Circles',
+                }}
+            >
+                {() => <CirclesStackNavigator />}
             </Tab.Screen>
             <Tab.Screen
                 name="ProfileTab"

@@ -55,3 +55,31 @@ class NotificationRepository:
         # Limit to 50 devices per user
         tokens = await cursor.to_list(length=50)
         return [t["token"] for t in tokens if t.get("token")]
+
+    async def get_tokens_for_users(self, user_ids: List[str], exclude_user_id: str = None) -> List[str]:
+        """
+        Get device tokens for multiple users.
+
+        Used by circle notifications to notify all circle members.
+
+        Args:
+            user_ids: List of user IDs to get tokens for
+            exclude_user_id: Optional user ID to exclude (e.g., the post author)
+
+        Returns:
+            List of FCM token strings
+        """
+        query = {"user_id": {"$in": user_ids}}
+        if exclude_user_id:
+            query["user_id"]["$ne"] = exclude_user_id
+            # Rebuild query properly
+            query = {
+                "$and": [
+                    {"user_id": {"$in": user_ids}},
+                    {"user_id": {"$ne": exclude_user_id}}
+                ]
+            }
+
+        cursor = self.collection.find(query, {"token": 1, "_id": 0})
+        tokens = await cursor.to_list(length=None)
+        return [t["token"] for t in tokens if t.get("token")]

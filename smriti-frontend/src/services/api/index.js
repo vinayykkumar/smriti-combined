@@ -14,6 +14,7 @@ export * as posts from './posts';
 export * as users from './users';
 export * as notifications from './notifications';
 export * as quotes from './quotes';
+export * as circles from './circles';
 
 // Default export for backward compatibility
 import * as authService from './auth';
@@ -21,6 +22,7 @@ import * as postsService from './posts';
 import * as usersService from './users';
 import * as notificationsService from './notifications';
 import * as quotesService from './quotes';
+import * as circlesService from './circles';
 import { getAuthToken } from './client';
 
 export default {
@@ -49,4 +51,11 @@ export default {
   fetchTodayQuote: quotesService.fetchTodayQuote,
   fetchQuoteHistory: quotesService.fetchQuoteHistory,
   updateUserLocation: quotesService.updateUserLocation,
+
+  // Circles
+  getCircles: circlesService.getCircles,
+  getCircleDetails: circlesService.getCircleDetails,
+  createCircle: circlesService.createCircle,
+  joinCircle: circlesService.joinCircle,
+  getCirclePosts: circlesService.getCirclePosts,
 };

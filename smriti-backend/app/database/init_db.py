@@ -32,7 +32,20 @@ async def create_indexes():
         name="posts_text_search_index",
         default_language="english"
     )
+
+    # Circles-related indexes for posts
+    await db.posts.create_index("visibility")  # Filter public vs circles posts
+    await db.posts.create_index("circle_ids")  # Find posts in a circle
+    await db.posts.create_index([("circle_ids", 1), ("created_at", -1)])  # Circle feed query
     print("  ✓ Posts indexes created")
+
+    # =========================================================================
+    # CIRCLES COLLECTION INDEXES
+    # =========================================================================
+    await db.circles.create_index("invite_code", unique=True)  # Unique invite codes
+    await db.circles.create_index("members.user_id")  # Find circles by member
+    await db.circles.create_index([("members.user_id", 1), ("created_at", -1)])  # User's circles sorted
+    print("  ✓ Circles indexes created")
 
     # =========================================================================
     # USER_DAILY_QUOTES COLLECTION INDEXES (Today's Quote feature)
@@ -72,6 +85,9 @@ async def create_indexes():
         await db.device_tokens.create_index("user_id")
     if "token_1" not in existing_indexes:
         await db.device_tokens.create_index("token", unique=True)
+    # Composite index for efficient queries by user sorted by time
+    if "user_id_1_created_at_-1" not in existing_indexes:
+        await db.device_tokens.create_index([("user_id", 1), ("created_at", -1)])
     print("  ✓ Device tokens indexes verified")
 
     print("\n✅ All database indexes created successfully")

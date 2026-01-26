@@ -116,6 +116,74 @@ export const deletePost = async (postId) => {
 };
 
 /**
+ * Create a post in a specific circle
+ * @param {Object} postData - Post data including circleId
+ * @param {string} postData.circleId - Circle ID to post to
+ * @param {string} [postData.title] - Post title
+ * @param {string} [postData.textContent] - Post text content
+ * @param {Object} [postData.image] - Image object from ImagePicker
+ * @param {Object} [postData.document] - Document object from DocumentPicker
+ * @returns {Promise<Object>} - {success, post, error}
+ */
+export const createCirclePost = async (postData) => {
+  try {
+    const formData = new FormData();
+
+    // Determine content_type based on attachments
+    let contentType = 'note';
+    if (postData.document) {
+      contentType = 'document';
+    } else if (postData.image) {
+      contentType = 'image';
+    }
+    formData.append('content_type', contentType);
+
+    // Add visibility and circle_ids for circle posts
+    formData.append('visibility', 'circles');
+    formData.append('circle_ids', postData.circleId);
+
+    // Add text content
+    if (postData.title) {
+      formData.append('title', postData.title);
+    }
+    if (postData.textContent) {
+      formData.append('text_content', postData.textContent);
+    }
+
+    // Add image if provided
+    if (postData.image) {
+      const imageUri = postData.image.uri;
+      const filename = imageUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      formData.append('image', {
+        uri: imageUri,
+        name: filename,
+        type: type
+      });
+    }
+
+    // Add document if provided
+    if (postData.document) {
+      const doc = postData.document;
+      formData.append('document', {
+        uri: doc.uri,
+        name: doc.name,
+        type: doc.mimeType || 'application/pdf'
+      });
+    }
+
+    return await apiPost('/api/posts/', formData);
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message || 'Failed to create circle post'
+    };
+  }
+};
+
+/**
  * Search posts with full-text search and filters
  * @param {Object} params - Search parameters
  * @param {string} [params.q] - Search query text
