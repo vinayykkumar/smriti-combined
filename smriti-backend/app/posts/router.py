@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
-from typing import Optional
+from typing import Optional, List
+from bson import ObjectId
 from app.database.connection import get_database
-from app.posts.schemas import PostResponse, ContentType
+from app.posts.schemas import PostResponse, ContentType, Visibility
 from app.auth.schemas import UserResponse
 from app.auth.dependencies import get_current_user
 from app.utils.response_formatter import success_response
 from app.utils.date_helpers import get_current_timestamp
 from app.posts import service
+from app.posts.service import create_circle_post, NotCircleMemberError
 from app.posts.validators import validate_post_content
 from app.posts.file_upload import process_post_uploads
 
@@ -41,17 +43,57 @@ async def create_post(
     link_url: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     document: Optional[UploadFile] = File(None),
+    visibility: str = Form("public", description="Post visibility: 'public' or 'circles'"),
+    circle_ids: Optional[str] = Form(None, description="Comma-separated circle IDs (required if visibility='circles')"),
     db = Depends(get_database),
     current_user: UserResponse = Depends(get_current_user)
 ):
-    """Create a new post (note, link, image, or document)"""
-    
+    """
+    Create a new post (note, link, image, or document).
+
+    For public posts: set visibility='public' (default)
+    For circle posts: set visibility='circles' and provide circle_ids as comma-separated list
+    """
+
     # Validate post content
     validate_post_content(content_type, text_content, link_url, image, document)
-    
+
+    # Parse and validate visibility
+    if visibility not in ["public", "circles"]:
+        raise HTTPException(
+            status_code=400,
+            detail={"success": False, "error": "visibility must be 'public' or 'circles'"}
+        )
+
+    # Parse circle_ids if provided
+    parsed_circle_ids = []
+    if circle_ids:
+        parsed_circle_ids = [cid.strip() for cid in circle_ids.split(",") if cid.strip()]
+        # Validate ObjectId format
+        for cid in parsed_circle_ids:
+            if not ObjectId.is_valid(cid):
+                raise HTTPException(
+                    status_code=400,
+                    detail={"success": False, "error": f"Invalid circle ID format: {cid}"}
+                )
+
+    # Validate visibility/circle_ids combination
+    if visibility == "circles":
+        if not parsed_circle_ids:
+            raise HTTPException(
+                status_code=400,
+                detail={"success": False, "error": "circle_ids required when visibility='circles'"}
+            )
+    else:  # public
+        if parsed_circle_ids:
+            raise HTTPException(
+                status_code=400,
+                detail={"success": False, "error": "circle_ids must be empty for public posts"}
+            )
+
     # Process file uploads
     upload_data = await process_post_uploads(content_type, image, document)
-    
+
     # Create post document
     post_dict = {
         "content_type": content_type,
@@ -65,12 +107,32 @@ async def create_post(
         },
         "created_at": get_current_timestamp()
     }
-    
-    created_post = await service.create_post_db(db, post_dict, current_user)
-    
+
+    # Handle circle posts vs public posts
+    if visibility == "circles":
+        try:
+            created_post = await create_circle_post(
+                db,
+                post_dict,
+                parsed_circle_ids,
+                str(current_user.id),
+                current_user
+            )
+            message = "Post created in circle(s)"
+        except NotCircleMemberError as e:
+            raise HTTPException(
+                status_code=403,
+                detail={"success": False, "error": e.message, "code": e.code}
+            )
+    else:
+        # Public post
+        post_dict["visibility"] = "public"
+        created_post = await service.create_post_db(db, post_dict, current_user)
+        message = "Post created successfully"
+
     return success_response(
         data={"post": PostResponse(**{**created_post, "_id": str(created_post["_id"])})},
-        message="Post created successfully",
+        message=message,
         status_code=status.HTTP_201_CREATED
     )
 

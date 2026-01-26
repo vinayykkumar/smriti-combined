@@ -1,8 +1,8 @@
 import hashlib
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from bson import ObjectId
-from app.posts.schemas import PostCreate, PostInDB
+from app.posts.schemas import PostCreate, PostInDB, Visibility
 from app.utils.cloudinary import delete_file
 from app.utils.cache import cache
 from app.utils.logger import get_logger
@@ -12,8 +12,46 @@ logger = get_logger(__name__)
 SEARCH_CACHE_PREFIX = "search:"
 SEARCH_CACHE_TTL = 300  # 5 minutes
 
+
+# =============================================================================
+# CIRCLE POST EXCEPTIONS
+# =============================================================================
+
+class PostVisibilityError(Exception):
+    """Error related to post visibility/circle permissions."""
+    def __init__(self, message: str, code: str = "VISIBILITY_ERROR"):
+        self.message = message
+        self.code = code
+        super().__init__(self.message)
+
+
+class NotCircleMemberError(PostVisibilityError):
+    """User is not a member of one or more specified circles."""
+    def __init__(self, circle_id: str = None):
+        message = f"You're not a member of circle {circle_id}" if circle_id else "You're not a member of the specified circle(s)"
+        super().__init__(message, "NOT_CIRCLE_MEMBER")
+        self.circle_id = circle_id
+
+
+# =============================================================================
+# PUBLIC FEED FUNCTIONS
+# =============================================================================
+
 async def get_all_posts(db, skip: int, limit: int):
-    cursor = db.posts.find().sort("created_at", -1).skip(skip).limit(limit)
+    """
+    Get all PUBLIC posts (excludes circle-only posts).
+
+    This is the main feed - only shows posts with visibility='public'
+    or posts without visibility field (backwards compatibility).
+    """
+    # Only return public posts (or posts without visibility for backwards compat)
+    query = {
+        "$or": [
+            {"visibility": "public"},
+            {"visibility": {"$exists": False}}  # Old posts without visibility field
+        ]
+    }
+    cursor = db.posts.find(query).sort("created_at", -1).skip(skip).limit(limit)
     return await cursor.to_list(length=limit)
 
 async def create_post_db(db, post_dict: dict, current_user=None):
@@ -37,17 +75,228 @@ async def create_post_db(db, post_dict: dict, current_user=None):
 
     # 3. Send notifications (fire-and-forget, don't block response)
     if current_user:
+        visibility = post_dict.get("visibility", "public")
+        circle_ids = post_dict.get("circle_ids", [])
+
         try:
             from app.notifications import service as notification_service
-            await notification_service.notify_new_post(db, current_user, created_post)
+
+            if visibility == "circles" and circle_ids:
+                # Notify circle members
+                await notification_service.notify_circle_post(db, current_user, created_post, circle_ids)
+            else:
+                # Notify all users (public post)
+                await notification_service.notify_new_post(db, current_user, created_post)
         except ImportError:
             # Notifications module not available - skip silently
             logger.debug("Notifications module not available")
         except Exception as e:
             # Log error but don't fail the request
             logger.error(f"Failed to send notification: {e}")
-    
+
     return created_post
+
+
+# =============================================================================
+# CIRCLE POST FUNCTIONS
+# =============================================================================
+
+async def validate_circle_membership_for_post(
+    db,
+    circle_ids: List[str],
+    user_id: str
+) -> Tuple[bool, Optional[str]]:
+    """
+    Validate that a user is a member of ALL specified circles.
+
+    This MUST be called before creating a post with visibility='circles'.
+
+    Args:
+        db: Database connection
+        circle_ids: List of circle IDs to validate
+        user_id: User ID to check membership for
+
+    Returns:
+        Tuple of (is_valid, invalid_circle_id)
+        - (True, None) if user is member of all circles
+        - (False, circle_id) if user is not a member of that circle
+    """
+    from app.circles.dependencies import check_membership
+
+    for circle_id in circle_ids:
+        is_member = await check_membership(db, circle_id, user_id)
+        if not is_member:
+            return False, circle_id
+
+    return True, None
+
+
+async def create_circle_post(
+    db,
+    post_dict: dict,
+    circle_ids: List[str],
+    user_id: str,
+    current_user=None
+) -> dict:
+    """
+    Create a post in one or more circles.
+
+    This function validates membership BEFORE creating the post.
+
+    Args:
+        db: Database connection
+        post_dict: Post data to save (without visibility/circle_ids)
+        circle_ids: List of circle IDs to post to
+        user_id: Author's user ID
+        current_user: Current authenticated user (for notifications)
+
+    Returns:
+        Created post document
+
+    Raises:
+        NotCircleMemberError: If user is not a member of any specified circle
+    """
+    # Validate membership for ALL circles
+    is_valid, invalid_circle_id = await validate_circle_membership_for_post(
+        db, circle_ids, user_id
+    )
+
+    if not is_valid:
+        raise NotCircleMemberError(invalid_circle_id)
+
+    # Add visibility and circle_ids to post
+    post_dict["visibility"] = "circles"
+    post_dict["circle_ids"] = circle_ids
+
+    # Create the post
+    return await create_post_db(db, post_dict, current_user)
+
+
+async def get_circle_posts(
+    db,
+    circle_id: str,
+    user_id: str,
+    skip: int = 0,
+    limit: int = 20
+) -> Tuple[List[dict], int]:
+    """
+    Get posts from a specific circle.
+
+    SECURITY: This function validates membership before returning posts.
+
+    Args:
+        db: Database connection
+        circle_id: Circle ID to get posts from
+        user_id: User ID requesting posts (for membership check)
+        skip: Number of posts to skip
+        limit: Maximum number of posts to return
+
+    Returns:
+        Tuple of (posts list, total count)
+
+    Raises:
+        NotCircleMemberError: If user is not a member of the circle
+    """
+    from app.circles.dependencies import check_membership
+
+    # Validate membership
+    is_member = await check_membership(db, circle_id, user_id)
+    if not is_member:
+        raise NotCircleMemberError(circle_id)
+
+    # Query posts in this circle
+    query = {"circle_ids": circle_id}
+
+    total = await db.posts.count_documents(query)
+    cursor = db.posts.find(query).sort("created_at", -1).skip(skip).limit(limit)
+    posts = await cursor.to_list(length=limit)
+
+    return posts, total
+
+
+async def get_posts_by_user_with_circles(
+    db,
+    user_id: str,
+    requesting_user_id: str,
+    skip: int = 0,
+    limit: int = 20
+) -> List[dict]:
+    """
+    Get posts by a specific user, respecting circle privacy.
+
+    - If requesting own posts: Returns ALL posts (public + circles)
+    - If requesting other user's posts: Returns only PUBLIC posts
+
+    Args:
+        db: Database connection
+        user_id: User ID whose posts to fetch
+        requesting_user_id: User ID making the request
+        skip: Number of posts to skip
+        limit: Maximum number of posts to return
+
+    Returns:
+        List of post documents
+    """
+    if user_id == requesting_user_id:
+        # User viewing their own posts - show everything
+        query = {"author.user_id": user_id}
+    else:
+        # Viewing someone else's posts - only public
+        query = {
+            "author.user_id": user_id,
+            "$or": [
+                {"visibility": "public"},
+                {"visibility": {"$exists": False}}
+            ]
+        }
+
+    cursor = db.posts.find(query).sort("created_at", -1).skip(skip).limit(limit)
+    return await cursor.to_list(length=limit)
+
+
+async def enrich_posts_with_circle_names(db, posts: List[dict]) -> List[dict]:
+    """
+    Add circle names to posts for display purposes.
+
+    Args:
+        db: Database connection
+        posts: List of post documents
+
+    Returns:
+        Posts with circle_names field added
+    """
+    # Collect all unique circle_ids
+    all_circle_ids = set()
+    for post in posts:
+        circle_ids = post.get("circle_ids", [])
+        if circle_ids:
+            all_circle_ids.update(circle_ids)
+
+    if not all_circle_ids:
+        return posts
+
+    # Fetch circle names
+    circle_names_map = {}
+    for circle_id in all_circle_ids:
+        if ObjectId.is_valid(circle_id):
+            circle = await db.circles.find_one(
+                {"_id": ObjectId(circle_id)},
+                {"name": 1}
+            )
+            if circle:
+                circle_names_map[circle_id] = circle["name"]
+
+    # Enrich posts
+    for post in posts:
+        circle_ids = post.get("circle_ids", [])
+        if circle_ids:
+            # Include all circle names, using "Unknown Circle" for deleted circles
+            post["circle_names"] = [
+                circle_names_map.get(cid, "Unknown Circle")
+                for cid in circle_ids
+            ]
+
+    return posts
 
 async def get_post_by_id(db, post_id: str):
     if not ObjectId.is_valid(post_id):
@@ -119,8 +368,13 @@ async def search_posts(
         logger.debug(f"Search cache hit for key: {cache_key}")
         return cached_result
 
-    # Build query filter
-    query_filter = {}
+    # Build query filter - ONLY search public posts
+    query_filter = {
+        "$or": [
+            {"visibility": "public"},
+            {"visibility": {"$exists": False}}  # Backwards compat
+        ]
+    }
     sort_criteria = [("created_at", -1)]  # Default sort by newest
     projection = None
 
