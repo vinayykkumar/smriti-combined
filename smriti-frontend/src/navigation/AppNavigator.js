@@ -7,7 +7,6 @@ import ProfileScreen from '../screens/ProfileScreen';
 import SearchScreen from '../screens/SearchScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import PastQuotesScreen from '../screens/PastQuotesScreen';
-import AICompanionScreen from '../screens/AICompanionScreen';
 import CirclesListScreen from '../screens/CirclesListScreen';
 import CircleFeedScreen from '../screens/CircleFeedScreen';
 import CircleSettingsScreen from '../screens/CircleSettingsScreen';
@@ -34,7 +33,6 @@ function HomeStackNavigator({ onCreatePost, onLogout }) {
             </HomeStack.Screen>
             <HomeStack.Screen name="UserProfile" component={UserProfileScreen} />
             <HomeStack.Screen name="PastQuotes" component={PastQuotesScreen} />
-            <HomeStack.Screen name="AICompanion" component={AICompanionScreen} />
         </HomeStack.Navigator>
     );
 }

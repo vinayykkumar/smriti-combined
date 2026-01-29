@@ -33,35 +33,7 @@ class Settings(BaseSettings):
 
     # Cron Security
     CRON_SECRET: Optional[str] = None
-
-    # AI Provider Configuration
-    AI_PROVIDER: str = "mock"  # openai | anthropic | local | mock
-
-    # OpenAI Configuration
-    OPENAI_API_KEY: Optional[str] = None
-    OPENAI_MODEL: str = "gpt-4o-mini"
-    OPENAI_TTS_MODEL: str = "tts-1"
-    OPENAI_TTS_VOICE: str = "nova"
-
-    # Anthropic Configuration
-    ANTHROPIC_API_KEY: Optional[str] = None
-    ANTHROPIC_MODEL: str = "claude-3-haiku-20240307"
-
-    # Local Model Configuration (Ollama)
-    LOCAL_MODEL_URL: str = "http://localhost:11434"
-    LOCAL_MODEL_NAME: str = "llama3"
-
-    # Companion Rate Limits (per hour)
-    COMPANION_RATE_LIMIT_PROMPT: int = 50
-    COMPANION_RATE_LIMIT_CONTEMPLATE: int = 50
-    COMPANION_RATE_LIMIT_MEDITATION: int = 20
-    COMPANION_RATE_LIMIT_TTS: int = 50
-    COMPANION_RATE_LIMIT_WINDOW: int = 3600  # 1 hour in seconds
-
-    # Conversation History
-    COMPANION_HISTORY_RETENTION_DAYS: int = 30
-    COMPANION_HISTORY_MAX_ENTRIES: int = 200
-
+    
     # Environment helpers
     @property
     def is_production(self) -> bool:

@@ -6,4 +6,3 @@ export { useSyncManager } from './useSyncManager';
 export { usePostCreation, POST_RESULT, RESULT_MESSAGES } from './usePostCreation';
 export { useQuote } from './useQuote';
 export { useCircles } from './useCircles';
-export { useCompanion } from './useCompanion';

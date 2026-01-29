@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../styles/theme';
 import { usePosts } from '../hooks/usePosts';
-import { PostList, CompanionCard } from '../components';
+import { PostList } from '../components';
 import TodayQuoteCard from '../components/quotes/TodayQuoteCard';
 
 export default function HomeScreen({ onCreatePost, navigation }) {
@@ -99,9 +99,6 @@ export default function HomeScreen({ onCreatePost, navigation }) {
             {/* Today's Quote Section */}
             <TodayQuoteCard navigation={navigation} />
 
-            {/* AI Companion Card */}
-            <CompanionCard navigation={navigation} />
-
             {posts.length > 0 && (
                 <View style={styles.feedHeader}>
                     <Text style={styles.sectionTitle}>Reflections</Text>
@@ -136,12 +133,6 @@ export default function HomeScreen({ onCreatePost, navigation }) {
                         <Text style={styles.headerTitle}>Hari Om</Text>
                         <Text style={styles.headerSubtitle}>Daily Reflections</Text>
                     </View>
-                    <TouchableOpacity
-                        style={styles.headerIconContainer}
-                        onPress={() => navigation.navigate('AICompanion')}
-                    >
-                        <Ionicons name="sparkles" size={22} color={COLORS.primary} />
-                    </TouchableOpacity>
                 </View>
             </ImageBackground>
 
