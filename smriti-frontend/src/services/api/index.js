@@ -15,6 +15,7 @@ export * as users from './users';
 export * as notifications from './notifications';
 export * as quotes from './quotes';
 export * as circles from './circles';
+export * as companion from './companion';
 
 // Default export for backward compatibility
 import * as authService from './auth';

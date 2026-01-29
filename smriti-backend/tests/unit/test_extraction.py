@@ -206,7 +206,7 @@ class TestPickRandomQuote:
     @pytest.mark.asyncio
     async def test_returns_none_when_no_posts(self):
         """Should return None when no posts exist."""
-        with patch('app.quotes.extraction.get_database') as mock_get_db:
+        with patch('app.quotes.extraction.get_database', new_callable=AsyncMock) as mock_get_db:
             from app.quotes.extraction import pick_random_quote
 
             mock_db = MagicMock()
@@ -222,7 +222,7 @@ class TestPickRandomQuote:
     @pytest.mark.asyncio
     async def test_returns_quote_from_single_post(self):
         """Should extract quote from a single post."""
-        with patch('app.quotes.extraction.get_database') as mock_get_db:
+        with patch('app.quotes.extraction.get_database', new_callable=AsyncMock) as mock_get_db:
             from app.quotes.extraction import pick_random_quote
 
             mock_db = MagicMock()
@@ -252,7 +252,7 @@ class TestPickRandomQuote:
     @pytest.mark.asyncio
     async def test_returns_quote_from_multiple_posts(self):
         """Should return quote from one of multiple posts."""
-        with patch('app.quotes.extraction.get_database') as mock_get_db:
+        with patch('app.quotes.extraction.get_database', new_callable=AsyncMock) as mock_get_db:
             from app.quotes.extraction import pick_random_quote
 
             mock_db = MagicMock()
@@ -288,7 +288,7 @@ class TestPickRandomQuote:
     @pytest.mark.asyncio
     async def test_skips_posts_with_unusable_text(self):
         """Should skip posts with text that's too short."""
-        with patch('app.quotes.extraction.get_database') as mock_get_db:
+        with patch('app.quotes.extraction.get_database', new_callable=AsyncMock) as mock_get_db:
             from app.quotes.extraction import pick_random_quote
 
             mock_db = MagicMock()
@@ -318,7 +318,7 @@ class TestPickRandomQuote:
     @pytest.mark.asyncio
     async def test_handles_post_with_only_title(self):
         """Should extract quote from post with only title."""
-        with patch('app.quotes.extraction.get_database') as mock_get_db:
+        with patch('app.quotes.extraction.get_database', new_callable=AsyncMock) as mock_get_db:
             from app.quotes.extraction import pick_random_quote
 
             mock_db = MagicMock()
@@ -342,7 +342,7 @@ class TestPickRandomQuote:
     @pytest.mark.asyncio
     async def test_handles_post_with_only_content(self):
         """Should extract quote from post with only text_content."""
-        with patch('app.quotes.extraction.get_database') as mock_get_db:
+        with patch('app.quotes.extraction.get_database', new_callable=AsyncMock) as mock_get_db:
             from app.quotes.extraction import pick_random_quote
 
             mock_db = MagicMock()

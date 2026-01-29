@@ -9,6 +9,7 @@ from app.users.router import router as users_router
 from app.notifications.router import router as notifications_router
 from app.quotes.router import router as quotes_router, internal_router as quotes_internal_router
 from app.circles.router import router as circles_router
+from app.companion.router import router as companion_router
 from app.middleware.cors import setup_cors
 from app.utils.logger import get_logger
 import logging
@@ -68,6 +69,7 @@ app.include_router(posts_router, prefix=f"{settings.API_V1_STR}/posts", tags=["P
 app.include_router(users_router, prefix=f"{settings.API_V1_STR}/users", tags=["Users"])
 app.include_router(notifications_router, prefix=f"{settings.API_V1_STR}/notifications", tags=["Notifications"])
 app.include_router(circles_router, prefix=f"{settings.API_V1_STR}/circles", tags=["Circles"])
+app.include_router(companion_router, prefix=f"{settings.API_V1_STR}/ai/companion", tags=["AI Companion"])
 app.include_router(quotes_router, prefix=f"{settings.API_V1_STR}", tags=["Quotes"])
 app.include_router(quotes_internal_router, prefix=f"{settings.API_V1_STR}", tags=["Internal"])
 

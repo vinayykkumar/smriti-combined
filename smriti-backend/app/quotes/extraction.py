@@ -154,7 +154,7 @@ async def pick_random_quote() -> Optional[Dict[str, Any]]:
         }
         Or None if no posts have usable text.
     """
-    db = get_database()
+    db = await get_database()
 
     # Aggregation pipeline to get random posts with text content
     pipeline = [
@@ -228,7 +228,7 @@ async def get_posts_with_text_count() -> int:
     Returns:
         Number of posts with title or text_content
     """
-    db = get_database()
+    db = await get_database()
 
     count = await db.posts.count_documents({
         "$or": [

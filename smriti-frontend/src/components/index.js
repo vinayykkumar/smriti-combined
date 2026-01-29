@@ -12,3 +12,6 @@ export { default as PostList } from './posts/PostList';
 
 // Quote Components
 export { default as TodayQuoteCard } from './quotes/TodayQuoteCard';
+
+// Companion Components
+export { default as CompanionCard } from './companion/CompanionCard';
