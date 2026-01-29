@@ -1,12 +1,27 @@
-import messaging from '@react-native-firebase/messaging';
 import { Platform, Alert } from 'react-native';
 import { notifications } from './api';
+
+// Only import Firebase messaging on native platforms (not web)
+let messaging = null;
+if (Platform.OS !== 'web') {
+    try {
+        messaging = require('@react-native-firebase/messaging').default;
+    } catch (error) {
+        console.warn('Firebase messaging not available:', error.message);
+    }
+}
 
 /**
  * Request notification permission from the user
  * @returns {Promise<boolean>} true if permission granted, false otherwise
  */
 export async function requestNotificationPermission() {
+    // Web doesn't support Firebase messaging
+    if (Platform.OS === 'web' || !messaging) {
+        console.log('⚠️ Notifications not supported on web platform');
+        return false;
+    }
+
     try {
         const authStatus = await messaging().requestPermission();
         const enabled =
@@ -31,6 +46,11 @@ export async function requestNotificationPermission() {
  * @returns {Promise<string|null>} FCM token if successful, null otherwise
  */
 export async function registerDeviceToken(authToken) {
+    if (Platform.OS === 'web' || !messaging) {
+        console.log('⚠️ Device token registration not supported on web');
+        return null;
+    }
+
     try {
         // Get FCM token from Firebase
         const fcmToken = await messaging().getToken();
@@ -52,6 +72,11 @@ export async function registerDeviceToken(authToken) {
  * @param {string} authToken - JWT authentication token
  */
 export async function unregisterDeviceToken(authToken) {
+    if (Platform.OS === 'web' || !messaging) {
+        console.log('⚠️ Device token unregistration not supported on web');
+        return;
+    }
+
     try {
         const fcmToken = await messaging().getToken();
         await notifications.unregisterNotificationToken(fcmToken, Platform.OS);
@@ -70,6 +95,11 @@ export async function unregisterDeviceToken(authToken) {
  * @returns {Function} Cleanup function to remove listeners
  */
 export function setupNotificationListeners(navigation, authToken, quoteCallbacks = {}) {
+    if (Platform.OS === 'web' || !messaging) {
+        console.log('⚠️ Notification listeners not supported on web');
+        return () => { }; // Return empty cleanup function
+    }
+
     const unsubscribers = [];
     const { openQuotePopup } = quoteCallbacks;
 
@@ -185,6 +215,10 @@ export function setupNotificationListeners(navigation, authToken, quoteCallbacks
  * @returns {Promise<boolean>}
  */
 export async function checkNotificationPermission() {
+    if (Platform.OS === 'web' || !messaging) {
+        return false;
+    }
+
     const authStatus = await messaging().hasPermission();
     return (
         authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
